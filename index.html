@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CGTubers Más Populares de América 2026 | Analytics Red Edition</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter & Rajdhani para estética gaming/esports -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Rajdhani:wght@600;700;800&display=swap" rel="stylesheet" />
+  <!-- D3.js & TopoJSON para renderizar el mapa geográfico interactivo preciso de América -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Rajdhani', 'sans-serif'],
+          },
+          colors: {
+            crimson: {
+              950: '#120406',
+              900: '#1f070b',
+              800: '#380b12',
+              700: '#63111d',
+              600: '#991b1b',
+              500: '#dc2626',
+              400: '#ef4444',
+              300: '#f87171',
+            }
+          },
+          boxShadow: {
+            'neon-red': '0 0 20px rgba(239, 68, 68, 0.35), 0 0 6px rgba(220, 38, 38, 0.6)',
+            'neon-red-lg': '0 0 35px rgba(239, 68, 68, 0.5), inset 0 0 12px rgba(239, 68, 68, 0.2)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Estilos personalizados para atmósfera rojo carmesí oscuro, scrollbars y efectos neón */
+    body {
+      background-color: #090304;
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(185, 28, 28, 0.18) 0%, transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(127, 29, 29, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 50% 90%, rgba(220, 38, 38, 0.12) 0%, transparent 50%);
+      color: #f8fafc;
+      overflow-x: hidden;
+    }
+
+    /* Cuadrícula sutil estilo radar/gaming */
+    .bg-grid-pattern {
+      background-size: 36px 36px;
+      background-image: 
+        linear-gradient(to right, rgba(239, 68, 68, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(239, 68, 68, 0.05) 1px, transparent 1px);
+    }
+
+    /* Glassmorphism oscuro con borde carmesí */
+    .red-glass {
+      background: linear-gradient(145deg, rgba(26, 8, 11, 0.85) 0%, rgba(13, 4, 6, 0.92) 100%);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(239, 68, 68, 0.22);
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .red-glass:hover {
+      border-color: rgba(239, 68, 68, 0.65);
+      box-shadow: 0 8px 28px -4px rgba(220, 38, 38, 0.28);
+    }
+
+    /* Estilos del mapa SVG */
+    .country-path {
+      stroke: #140507;
+      stroke-width: 0.75px;
+      transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease;
+      cursor: pointer;
+    }
+    .country-path.has-data:hover,
+    .country-path.active-country {
+      stroke: #ffffff;
+      stroke-width: 1.5px;
+      filter: drop-shadow(0 0 8px rgba(255, 70, 70, 0.95));
+    }
+    .country-path.no-data {
+      fill: #1b191a;
+      stroke: #2c2627;
+      cursor: default;
+    }
+
+    /* Scrollbar personalizada */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d0405;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #5c131c;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #dc2626;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.85; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+    .animate-pulse-glow {
+      animation: pulseGlow 3s infinite ease-in-out;
+    }
+
+    /* Animaciones para el Modal de Bienvenida ABG Productions™ */
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.94) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-card-enter {
+      animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="bg-grid-pattern min-h-screen antialiased selection:bg-red-600 selection:text-white">
+
+  <!-- Pantalla de Bienvenida (Modal inicial al entrar por primera vez) -->
+  <div id="welcome-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-opacity duration-300 opacity-0" role="dialog" aria-modal="true" aria-labelledby="welcome-modal-title">
+    <div class="modal-card-enter relative w-full max-w-lg rounded-3xl bg-gradient-to-b from-[#1e070b] via-[#120406] to-[#090203] border-2 border-red-500/70 shadow-neon-red-lg p-6 sm:p-8 text-center overflow-hidden">
+      <!-- Resplandor ambiental rojo neón -->
+      <div class="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-48 bg-red-600/25 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="relative z-10 space-y-5">
+        <!-- Emblema superior -->
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-red-500 via-red-700 to-black border border-red-400/60 shadow-neon-red flex items-center justify-center">
+          <svg class="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+
+        <!-- Título llamativo -->
+        <div class="space-y-1.5">
+          <span class="inline-block px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-widest bg-red-950 text-red-300 border border-red-600/50">
+            Edición Continental 2026
+          </span>
+          <h2 id="welcome-modal-title" class="font-display text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+            ¡Bienvenido a las Estadísticas <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-500">CGTubers América 2026</span>!
+          </h2>
+        </div>
+
+        <!-- Aviso claro y amigable sobre variación de cifras -->
+        <div class="bg-black/65 border border-red-800/60 rounded-2xl p-4 text-left flex items-start gap-3">
+          <div class="p-2 rounded-xl bg-red-500/15 text-red-400 shrink-0 mt-0.5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p class="text-xs sm:text-sm text-gray-200 leading-relaxed">
+            Las estadísticas que verás a continuación <strong class="text-red-400 font-semibold">no son 100% exactas en tiempo real</strong>, ya que algunos creadores reciben miles y miles de suscriptores constantemente, por lo que las cifras pueden cambiar.
+          </p>
+        </div>
+
+        <!-- Badge destacado de autoría ABG Productions™ -->
+        <div class="inline-flex flex-col items-center justify-center px-5 py-2.5 rounded-2xl bg-gradient-to-r from-red-950/90 via-red-900/50 to-red-950/90 border border-red-500/45 shadow-md">
+          <span class="text-xs sm:text-sm font-display font-extrabold tracking-wider uppercase text-white flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            Creado por ABG Productions™
+          </span>
+          <span class="text-[11px] text-red-300/80 font-medium">Anima, Boceta y Goza Productions</span>
+        </div>
+
+        <!-- Botón principal rojo brillante -->
+        <div class="pt-1">
+          <button id="close-welcome-btn" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-display font-extrabold text-base sm:text-lg tracking-wide uppercase shadow-neon-red hover:shadow-neon-red-lg transform hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer">
+            Entrar a las Estadísticas 🚀
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra Superior de Navegación / Estado -->
+  <header class="sticky top-0 z-40 border-b border-red-900/40 bg-[#0b0304]/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <!-- Emblema SVG Chicken Gun / Red Analytics -->
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-900 flex items-center justify-center shadow-neon-red border border-red-400/40 shrink-0">
+          <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div>
+          <span class="font-display font-bold text-lg sm:text-xl tracking-wider uppercase text-white flex items-center gap-2">
+            CG<span class="text-red-500">STATS</span> <span class="text-xs font-sans font-semibold px-2 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-700/50">EDICIÓN 2026</span>
+          </span>
+          <p class="text-[11px] text-red-200/70 hidden sm:block">Observatorio Continental • <span class="text-red-400 font-semibold">Creado por ABG Productions™</span></p>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-1.5 sm:gap-3 text-xs sm:text-sm font-medium">
+        <a href="#mapa-section" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-red-100/80 hover:text-white hover:bg-red-950/60 transition">Mapa</a>
+        <a href="#ranking-section" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-red-100/80 hover:text-white hover:bg-red-950/60 transition">Ranking</a>
+        <a href="#directorio-section" class="hidden md:inline-block px-3 py-1.5 rounded-lg bg-red-600/20 text-red-300 border border-red-500/40 hover:bg-red-600 hover:text-white transition">18 Países</a>
+        <button id="open-welcome-btn" class="px-2.5 sm:px-3 py-1.5 rounded-lg bg-red-950/80 text-red-200 border border-red-700/50 hover:border-red-400 hover:text-white transition cursor-pointer flex items-center gap-1 text-xs font-semibold" title="Ver aviso y créditos de ABG Productions™">
+          <span>ℹ️</span>
+          <span class="hidden sm:inline">Aviso / Créditos</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 space-y-10">
+
+    <!-- 1. HERO & TARJETAS KPI GLOBALES -->
+    <section class="space-y-6">
+      <div class="relative rounded-2xl red-glass p-6 sm:p-8 lg:p-10 overflow-hidden border-red-500/30">
+        <!-- Resplandor decorativo -->
+        <div class="absolute -top-24 -right-24 w-72 h-72 bg-red-600/20 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          <div class="space-y-3 max-w-3xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-950/90 border border-red-500/40 text-red-300 text-xs font-semibold tracking-wide uppercase">
+              <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+              Reporte Anual Oficial • Comunidad Chicken Gun América
+            </div>
+            <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+              CGTubers Más Populares de <span class="text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-red-500 to-rose-600">América 2026</span>
+            </h1>
+            <p class="text-sm sm:text-base text-gray-300/90 leading-relaxed">
+              Análisis comparativo de los creadores de contenido de <strong>Chicken Gun</strong> con mayor número de suscriptores por país en Norteamérica, Centroamérica, el Caribe y Sudamérica.
+            </p>
+          </div>
+
+          <!-- Podio Rápido Top 3 -->
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-2.5 shrink-0 bg-black/50 p-4 rounded-xl border border-red-900/50">
+            <div class="text-[11px] uppercase tracking-wider font-bold text-red-400 flex items-center gap-1.5">
+              <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+              Podio Continental 2026
+            </div>
+            <div class="flex items-center justify-between gap-4 text-xs">
+              <span class="font-bold text-amber-400">#1 🇺🇸 @DragonDudeOfficial</span>
+              <span class="font-display font-bold text-sm text-white">368k</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 text-xs">
+              <span class="font-bold text-slate-300">#2 🇵🇪 @JrCrackOficial</span>
+              <span class="font-display font-bold text-sm text-white">272k</span>
+            </div>
+            <div class="flex items-center justify-between gap-4 text-xs">
+              <span class="font-bold text-amber-600">#3 🇧🇷 @Pedroguimarães90K</span>
+              <span class="font-display font-bold text-sm text-white">154k</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Tarjetas KPI Globales -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- KPI 1: Total Suscriptores -->
+        <div class="red-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-red-300/80">Suscriptores Totales</span>
+            <span class="p-2 rounded-lg bg-red-500/15 text-red-400 group-hover:bg-red-500 group-hover:text-white transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div id="kpi-total-subs" class="font-display text-3xl sm:text-4xl font-extrabold text-white tracking-tight">1,000,726</div>
+            <p class="text-xs text-red-300/70 mt-1">Suma combinada en el continente</p>
+          </div>
+        </div>
+
+        <!-- KPI 2: País Líder -->
+        <div class="red-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group border-red-500/45 shadow-neon-red">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-red-300">País Líder #1</span>
+            <span class="text-xl">🇺🇸</span>
+          </div>
+          <div class="mt-3">
+            <div class="font-display text-2xl sm:text-3xl font-extrabold text-white truncate">Estados Unidos</div>
+            <p class="text-xs text-red-400 font-semibold mt-1 truncate">@DragonDudeOfficial • 368k (36.8%)</p>
+          </div>
+        </div>
+
+        <!-- KPI 3: Países Analizados -->
+        <div class="red-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-red-300/80">Países Analizados</span>
+            <span class="p-2 rounded-lg bg-red-500/15 text-red-400 group-hover:bg-red-500 group-hover:text-white transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div class="font-display text-3xl sm:text-4xl font-extrabold text-white">18 <span class="text-base font-sans font-medium text-red-300/70">naciones</span></div>
+            <p class="text-xs text-gray-400 mt-1">3 regiones continentales cubiertas</p>
+          </div>
+        </div>
+
+        <!-- KPI 4: Promedio por País -->
+        <div class="red-glass rounded-2xl p-5 flex flex-col justify-between relative overflow-hidden group">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-red-300/80">Promedio por País</span>
+            <span class="p-2 rounded-lg bg-red-500/15 text-red-400 group-hover:bg-red-500 group-hover:text-white transition">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </span>
+          </div>
+          <div class="mt-3">
+            <div id="kpi-avg-subs" class="font-display text-3xl sm:text-4xl font-extrabold text-white">55,596</div>
+            <p class="text-xs text-red-300/70 mt-1">Suscriptores promedio por líder</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. MAPA DE CALOR INTERACTIVO DE AMÉRICA & INSPECTOR DE PAÍS -->
+    <section id="mapa-section" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+      <!-- Contenedor del Mapa SVG -->
+      <div class="lg:col-span-8 red-glass rounded-2xl p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 z-10">
+          <div>
+            <h2 class="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+              <span class="w-2.5 h-6 rounded-sm bg-red-500 inline-block"></span>
+              Mapa de Calor Continental
+            </h2>
+            <p class="text-xs sm:text-sm text-gray-400">Haz clic o pasa el cursor sobre cualquier país iluminado en rojo para inspeccionar su CGTuber líder.</p>
+          </div>
+
+          <!-- Leyenda de Intensidad Roja + N/A -->
+          <div class="flex flex-wrap items-center gap-3 text-[11px] bg-black/60 px-3 py-2 rounded-xl border border-red-900/40">
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-[#1b191a] border border-gray-600 inline-block"></span>
+              <span class="text-gray-400 font-semibold">N/A (Sin datos)</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-[#591118] inline-block"></span>
+              <span class="text-red-200">&lt; 10k</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-[#a81822] inline-block"></span>
+              <span class="text-red-200">10k - 100k</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-3 h-3 rounded-sm bg-[#ff2a38] shadow-neon-red inline-block"></span>
+              <span class="text-white font-bold">&gt; 100k</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Área del SVG del Mapa -->
+        <div id="map-container" class="relative w-full h-[460px] sm:h-[540px] rounded-xl bg-[#070203] border border-red-950/80 overflow-hidden flex items-center justify-center">
+          <div id="map-loader" class="text-center space-y-2">
+            <div class="w-8 h-8 border-2 border-red-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="text-xs text-red-300">Cargando cartografía de América...</p>
+          </div>
+          <!-- Tooltip Flotante -->
+          <div id="map-tooltip" class="pointer-events-none fixed z-50 hidden bg-[#140407]/95 border border-red-500 rounded-xl px-3.5 py-2.5 shadow-neon-red text-xs backdrop-blur-md">
+            <div class="flex items-center gap-2 font-bold text-white text-sm">
+              <span id="tt-flag">🇺🇸</span>
+              <span id="tt-country">Estados Unidos</span>
+            </div>
+            <div id="tt-creator" class="text-red-400 font-semibold mt-0.5">@DragonDudeOfficial</div>
+            <div id="tt-subs" class="text-gray-200 font-display font-bold text-base mt-0.5">368k (368,000)</div>
+          </div>
+        </div>
+
+        <!-- Selector rápido móvil/tablet debajo del mapa -->
+        <div class="mt-4 flex items-center gap-2 overflow-x-auto pb-1">
+          <span class="text-[11px] uppercase font-bold text-red-400 shrink-0">Acceso Rápido:</span>
+          <div id="quick-country-pills" class="flex items-center gap-1.5"></div>
+        </div>
+      </div>
+
+      <!-- Panel Lateral Inspector de País Seleccionado -->
+      <div class="lg:col-span-4 red-glass rounded-2xl p-6 flex flex-col justify-between border-red-500/35">
+        <div>
+          <div class="flex items-center justify-between border-b border-red-900/40 pb-4">
+            <span class="text-xs font-bold uppercase tracking-widest text-red-400 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span>
+              Ficha del País Seleccionado
+            </span>
+            <span id="inspector-rank-badge" class="px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+              #1 EN AMÉRICA
+            </span>
+          </div>
+
+          <!-- Contenido dinámico del Inspector -->
+          <div class="mt-6 text-center space-y-4">
+            <div id="inspector-avatar" class="w-24 h-24 mx-auto rounded-2xl bg-gradient-to-br from-red-600 via-red-800 to-black border-2 border-red-400 shadow-neon-red flex items-center justify-center text-4xl font-display font-extrabold text-white relative">
+              <span id="inspector-initials">DD</span>
+              <span id="inspector-flag" class="absolute -bottom-2 -right-2 text-2xl bg-[#120406] rounded-full p-1 border border-red-500/50">🇺🇸</span>
+            </div>
+
+            <div>
+              <h3 id="inspector-country" class="font-display text-3xl font-extrabold text-white">Estados Unidos</h3>
+              <p id="inspector-region" class="text-xs uppercase tracking-wider text-red-300/75 font-semibold mt-0.5">Norteamérica</p>
+            </div>
+
+            <div class="bg-black/60 rounded-xl p-4 border border-red-900/50 space-y-1">
+              <div class="text-[11px] uppercase tracking-wider text-gray-400">CGTuber Más Popular</div>
+              <div id="inspector-handle" class="text-lg sm:text-xl font-bold text-red-400 break-all">@DragonDudeOfficial</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-left">
+              <div class="bg-red-950/30 rounded-xl p-3.5 border border-red-800/40">
+                <div class="text-[11px] text-red-200/70">Suscriptores</div>
+                <div id="inspector-subs-short" class="font-display text-2xl font-extrabold text-white mt-0.5">368k</div>
+                <div id="inspector-subs-exact" class="text-[11px] text-gray-400">368,000 exactos</div>
+              </div>
+              <div class="bg-red-950/30 rounded-xl p-3.5 border border-red-800/40">
+                <div class="text-[11px] text-red-200/70">Cuota Continental</div>
+                <div id="inspector-share" class="font-display text-2xl font-extrabold text-red-400 mt-0.5">36.77%</div>
+                <div class="text-[11px] text-gray-400">Del total de América</div>
+              </div>
+            </div>
+
+            <!-- Barra de progreso relativa respecto al #1 -->
+            <div class="space-y-1.5 text-left pt-1">
+              <div class="flex justify-between text-xs">
+                <span class="text-gray-400">Comparativa vs Líder (#1)</span>
+                <span id="inspector-vs-leader" class="font-bold text-red-300">100%</span>
+              </div>
+              <div class="w-full h-2.5 bg-black rounded-full overflow-hidden border border-red-900/50">
+                <div id="inspector-progress-bar" class="h-full bg-gradient-to-r from-red-700 via-red-500 to-rose-400 rounded-full transition-all duration-500" style="width: 100%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t border-red-900/40 flex items-center justify-between text-xs text-gray-400">
+          <span>Haz clic en otro país del mapa</span>
+          <button id="btn-next-country" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold transition flex items-center gap-1 cursor-pointer">
+            Siguiente
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. GRÁFICO DE BARRAS HORIZONTALES INTERACTIVO + FILTROS Y BÚSQUEDA -->
+    <section id="ranking-section" class="red-glass rounded-2xl p-6 sm:p-8 space-y-6">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-red-900/40 pb-5">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-6 rounded-sm bg-red-500 inline-block"></span>
+            Ranking Interactivo de Suscriptores
+          </h2>
+          <p class="text-xs sm:text-sm text-gray-400 mt-1">Filtra por región geográfica o busca directamente por país o nombre del canal.</p>
+        </div>
+
+        <!-- Controles: Buscador y Filtros de Región -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <!-- Barra de Búsqueda -->
+          <div class="relative">
+            <svg class="w-4 h-4 text-red-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input 
+              type="text" 
+              id="search-input" 
+              placeholder="Buscar país o @CGTuber..." 
+              class="w-full sm:w-64 pl-10 pr-4 py-2 rounded-xl bg-black/70 border border-red-800/60 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition"
+            />
+          </div>
+
+          <!-- Filtros de Región -->
+          <div id="region-filters" class="flex flex-wrap gap-1.5 bg-black/60 p-1 rounded-xl border border-red-900/50">
+            <button data-region="ALL" class="region-btn active px-3 py-1.5 rounded-lg text-xs font-bold bg-red-600 text-white shadow-neon-red transition cursor-pointer">Todos (18)</button>
+            <button data-region="Norteamérica" class="region-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white hover:bg-red-950/60 transition cursor-pointer">Norteamérica</button>
+            <button data-region="Centroamérica y Caribe" class="region-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white hover:bg-red-950/60 transition cursor-pointer">Centroamérica y Caribe</button>
+            <button data-region="Sudamérica" class="region-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-300 hover:text-white hover:bg-red-950/60 transition cursor-pointer">Sudamérica</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toggle Escala Lineal / Logarítmica para apreciar mejor los canales pequeños -->
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400">
+        <span id="chart-results-count">Mostrando 18 de 18 países</span>
+        <div class="flex items-center gap-2">
+          <span>Escala visual de barras:</span>
+          <button id="toggle-scale-btn" class="px-2.5 py-1 rounded-lg bg-red-950/80 border border-red-700/50 text-red-200 hover:border-red-400 font-semibold transition cursor-pointer">
+            Modo: Raíz Cuadrada (Equilibrada)
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenedor de Barras Horizontales Animadas -->
+      <div id="horizontal-chart-container" class="space-y-3 pt-1">
+        <!-- Generado dinámicamente por JS -->
+      </div>
+    </section>
+
+    <!-- 4. DIRECTORIO DETALLADO (CUADRÍCULA DE TARJETAS / TABLA ALTERNABLE) -->
+    <section id="directorio-section" class="space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-6 rounded-sm bg-red-500 inline-block"></span>
+            Directorio Oficial por País (2026)
+          </h2>
+          <p class="text-xs sm:text-sm text-gray-400 mt-1">Listado completo de los 18 países con sus estadísticas exactas e insignias de podio.</p>
+        </div>
+
+        <!-- Botones de Ordenamiento y Vista (Cuadrícula vs Lista) -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="sort-toggle-btn" class="px-3.5 py-2 rounded-xl red-glass text-xs font-bold text-red-200 hover:text-white flex items-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"/></svg>
+            <span id="sort-label">Orden: Suscriptores (Mayor a Menor)</span>
+          </button>
+
+          <div class="flex items-center bg-black/70 p-1 rounded-xl border border-red-900/50">
+            <button id="view-grid-btn" class="p-2 rounded-lg bg-red-600 text-white transition cursor-pointer" title="Vista Cuadrícula">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+            </button>
+            <button id="view-list-btn" class="p-2 rounded-lg text-gray-400 hover:text-white transition cursor-pointer" title="Vista Tabla/Lista">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vista Cuadrícula de Tarjetas -->
+      <div id="cards-grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Generado dinámicamente por JS -->
+      </div>
+
+      <!-- Vista Tabla / Lista (Oculta por defecto) -->
+      <div id="table-list-container" class="hidden red-glass rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-red-900/50 bg-red-950/40 text-[11px] uppercase tracking-wider text-red-300">
+                <th class="py-3.5 px-4">Posición</th>
+                <th class="py-3.5 px-4">País</th>
+                <th class="py-3.5 px-4">Región</th>
+                <th class="py-3.5 px-4">CGTuber Líder</th>
+                <th class="py-3.5 px-4 text-right">Suscriptores</th>
+                <th class="py-3.5 px-4 text-right">Exacto</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-red-950/60 text-sm">
+              <!-- Generado dinámicamente por JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Pie de Página -->
+  <footer class="border-t border-red-950/80 bg-[#070203] mt-16 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-2">
+        <span class="w-2 h-2 rounded-full bg-red-600"></span>
+        <span class="font-semibold text-gray-300">CGTubers América 2026</span>
+        <span>•</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-red-950/80 border border-red-700/50 text-red-300 font-bold">Creado por ABG Productions™</span>
+      </div>
+      <div class="text-center md:text-right">
+        Cifras aproximadas sujetas a crecimiento en tiempo real • Territorios <span class="text-gray-300 font-semibold">N/A</span> sin muestra 2026.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lógica de Datos, Visualización e Interactividad -->
+  <script>
+    // Base de datos exacta de los 18 países proporcionados
+    const cgtubersData = [
+      { id: 1, country: "Estados Unidos", isoNumeric: "840", flag: "🇺🇸", region: "Norteamérica", handle: "@DragonDudeOfficial", subsShort: "368k", subs: 368000, initials: "DD" },
+      { id: 2, country: "Perú", isoNumeric: "604", flag: "🇵🇪", region: "Sudamérica", handle: "@JrCrackOficial", subsShort: "272k", subs: 272000, initials: "JR" },
+      { id: 3, country: "Brasil", isoNumeric: "076", flag: "🇧🇷", region: "Sudamérica", handle: "@Pedroguimarães90K", subsShort: "154k", subs: 154000, initials: "PG" },
+      { id: 4, country: "Venezuela", isoNumeric: "862", flag: "🇻🇪", region: "Sudamérica", handle: "@juandiminec-TY38kCG", subsShort: "59k", subs: 59000, initials: "JD" },
+      { id: 5, country: "El Salvador", isoNumeric: "222", flag: "🇸🇻", region: "Centroamérica y Caribe", handle: "@gustavoas1123", subsShort: "53,3k", subs: 53300, initials: "GA" },
+      { id: 6, country: "Bolivia", isoNumeric: "068", flag: "🇧🇴", region: "Sudamérica", handle: "@FessrepanzelOficial", subsShort: "35,4k", subs: 35400, initials: "FR" },
+      { id: 7, country: "México", isoNumeric: "484", flag: "🇲🇽", region: "Norteamérica", handle: "@ElWixt_Cg", subsShort: "17,8k", subs: 17800, initials: "EW" },
+      { id: 8, country: "Paraguay", isoNumeric: "600", flag: "🇵🇾", region: "Sudamérica", handle: "@mr_dino-b8x", subsShort: "10,7k", subs: 10700, initials: "MD" },
+      { id: 9, country: "República Dominicana", isoNumeric: "214", flag: "🇩🇴", region: "Centroamérica y Caribe", handle: "@FanDeCgEdits829", subsShort: "9,08k", subs: 9080, initials: "FC" },
+      { id: 10, country: "Argentina", isoNumeric: "032", flag: "🇦🇷", region: "Sudamérica", handle: "@ShergetOficialYT-HD", subsShort: "7,73k", subs: 7730, initials: "SO" },
+      { id: 11, country: "Guatemala", isoNumeric: "320", flag: "🇬🇹", region: "Centroamérica y Caribe", handle: "@Mr.Jostin_Oficial", subsShort: "5,35k", subs: 5350, initials: "MJ" },
+      { id: 12, country: "Honduras", isoNumeric: "340", flag: "🇭🇳", region: "Centroamérica y Caribe", handle: "@MirtHDD", subsShort: "3,83k", subs: 3830, initials: "MH" },
+      { id: 13, country: "Panamá", isoNumeric: "591", flag: "🇵🇦", region: "Centroamérica y Caribe", handle: "@banana83k", subsShort: "2,36k", subs: 2360, initials: "BN" },
+      { id: 14, country: "Chile", isoNumeric: "152", flag: "🇨🇱", region: "Sudamérica", handle: "@alexanderyytph2026", subsShort: "2,05k", subs: 2050, initials: "AL" },
+      { id: 15, country: "Colombia", isoNumeric: "170", flag: "🇨🇴", region: "Sudamérica", handle: "@davit_animate_6603", subsShort: "840", subs: 840, initials: "DA" },
+      { id: 16, country: "Ecuador", isoNumeric: "218", flag: "🇪🇨", region: "Sudamérica", handle: "@MAXIBLOXXYT08", subsShort: "501", subs: 501, initials: "MB" },
+      { id: 17, country: "Costa Rica", isoNumeric: "188", flag: "🇨🇷", region: "Centroamérica y Caribe", handle: "@NaranjitoCg1982", subsShort: "278", subs: 278, initials: "NC" },
+      { id: 18, country: "Nicaragua", isoNumeric: "558", flag: "🇳🇮", region: "Centroamérica y Caribe", handle: "@Jonathanelpro199", subsShort: "7", subs: 7, initials: "JP" }
+    ];
+
+    // Ordenar por suscriptores descendente y asignar ranking global fijo
+    const rankedData = [...cgtubersData]
+      .sort((a, b) => b.subs - a.subs)
+      .map((item, idx) => ({ ...item, rank: idx + 1 }));
+
+    const totalSubs = rankedData.reduce((acc, cur) => acc + cur.subs, 0);
+    const maxSubs = rankedData[0].subs;
+
+    // Estado de la aplicación
+    let state = {
+      selectedCountryId: 1,
+      regionFilter: "ALL",
+      searchQuery: "",
+      scaleMode: "sqrt", // 'sqrt' o 'linear'
+      sortBy: "subs",    // 'subs' o 'alpha'
+      viewMode: "grid"   // 'grid' o 'list'
+    };
+
+    // Formatear número con comas
+    const formatNumber = (num) => num.toLocaleString('en-US');
+
+    // Escala de color rojo calor según cantidad de suscriptores
+    function getHeatRedColor(subs) {
+      if (subs >= 250000) return "#ff1e2d"; // Rojo neón máximo (EEUU, Perú)
+      if (subs >= 100000) return "#e11d2a"; // Rojo intenso (Brasil)
+      if (subs >= 30000)  return "#b91c1c"; // Carmesí fuerte (Venezuela, El Salvador, Bolivia)
+      if (subs >= 10000)  return "#8f1419"; // Rojo medio (México, Paraguay)
+      if (subs >= 3000)   return "#6b1015"; // Rojo oscuro (Rep. Dom, Argentina, Guatemala, Honduras)
+      return "#4a0c11";                     // Rojo profundo (Panamá, Chile, Colombia, Ecuador, Costa Rica, Nicaragua)
+    }
+
+    // Obtener insignia de podio (Oro, Plata, Bronce o #Rank)
+    function getPodiumBadge(rank, compact = false) {
+      if (rank === 1) {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-amber-400 to-yellow-600 text-black shadow-md">🥇 ${compact ? '#1' : '#1 ORO'}</span>`;
+      }
+      if (rank === 2) {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-slate-200 to-slate-400 text-black shadow-md">🥈 ${compact ? '#2' : '#2 PLATA'}</span>`;
+      }
+      if (rank === 3) {
+        return `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-extrabold bg-gradient-to-r from-amber-600 to-orange-800 text-white shadow-md">🥉 ${compact ? '#3' : '#3 BRONCE'}</span>`;
+      }
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-950/90 text-red-300 border border-red-800/60">#${rank}</span>`;
+    }
+
+    // Actualizar Panel Lateral Inspector de País
+    function selectCountry(id) {
+      state.selectedCountryId = id;
+      const item = rankedData.find(d => d.id === id) || rankedData[0];
+
+      document.getElementById('inspector-initials').textContent = item.initials;
+      document.getElementById('inspector-flag').textContent = item.flag;
+      document.getElementById('inspector-country').textContent = item.country;
+      document.getElementById('inspector-region').textContent = item.region;
+      document.getElementById('inspector-handle').textContent = item.handle;
+      document.getElementById('inspector-subs-short').textContent = item.subsShort;
+      document.getElementById('inspector-subs-exact').textContent = `${formatNumber(item.subs)} exactos`;
+
+      const sharePct = ((item.subs / totalSubs) * 100).toFixed(2);
+      document.getElementById('inspector-share').textContent = `${sharePct}%`;
+
+      const vsLeaderPct = Math.max(1, ((item.subs / maxSubs) * 100)).toFixed(1);
+      document.getElementById('inspector-vs-leader').textContent = `${((item.subs / maxSubs) * 100).toFixed(2)}%`;
+      document.getElementById('inspector-progress-bar').style.width = `${vsLeaderPct}%`;
+
+      const badgeEl = document.getElementById('inspector-rank-badge');
+      badgeEl.textContent = `#${item.rank} EN AMÉRICA`;
+      if (item.rank === 1) {
+        badgeEl.className = "px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/40";
+      } else if (item.rank === 2) {
+        badgeEl.className = "px-2.5 py-1 rounded-full text-xs font-extrabold bg-slate-400/20 text-slate-200 border border-slate-400/40";
+      } else if (item.rank === 3) {
+        badgeEl.className = "px-2.5 py-1 rounded-full text-xs font-extrabold bg-orange-600/20 text-orange-300 border border-orange-500/40";
+      } else {
+        badgeEl.className = "px-2.5 py-1 rounded-full text-xs font-extrabold bg-red-900/40 text-red-300 border border-red-700/50";
+      }
+
+      // Resaltar país activo en el mapa SVG
+      d3.selectAll('.country-path').classed('active-country', false);
+      d3.select(`#country-iso-${item.isoNumeric}`).classed('active-country', true);
+
+      // Resaltar pill rápida
+      document.querySelectorAll('.quick-pill').forEach(btn => {
+        if (Number(btn.dataset.id) === id) {
+          btn.classList.add('bg-red-600', 'text-white', 'border-red-400');
+          btn.classList.remove('bg-black/60', 'text-gray-300', 'border-red-900/50');
+        } else {
+          btn.classList.remove('bg-red-600', 'text-white', 'border-red-400');
+          btn.classList.add('bg-black/60', 'text-gray-300', 'border-red-900/50');
+        }
+      });
+    }
+
+    // Renderizar píldoras de acceso rápido bajo el mapa
+    function renderQuickPills() {
+      const container = document.getElementById('quick-country-pills');
+      container.innerHTML = rankedData.map(item => `
+        <button data-id="${item.id}" class="quick-pill shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold border border-red-900/50 bg-black/60 text-gray-300 hover:border-red-500 hover:text-white transition cursor-pointer flex items-center gap-1.5">
+          <span>${item.flag}</span>
+          <span>${item.country}</span>
+        </button>
+      `).join('');
+
+      container.querySelectorAll('.quick-pill').forEach(btn => {
+        btn.addEventListener('click', () => selectCountry(Number(btn.dataset.id)));
+      });
+    }
+
+    // Renderizar Gráfico de Barras Horizontales
+    function renderHorizontalChart() {
+      const container = document.getElementById('horizontal-chart-container');
+      const query = state.searchQuery.toLowerCase().trim();
+
+      const filtered = rankedData.filter(item => {
+        const matchesRegion = state.regionFilter === "ALL" || item.region === state.regionFilter;
+        const matchesQuery = !query || 
+          item.country.toLowerCase().includes(query) || 
+          item.handle.toLowerCase().includes(query);
+        return matchesRegion && matchesQuery;
+      });
+
+      document.getElementById('chart-results-count').textContent = `Mostrando ${filtered.length} de ${rankedData.length} países`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 bg-black/40 rounded-xl border border-red-900/40">
+            <p class="text-red-300 font-semibold">No se encontraron países o CGTubers con "${state.searchQuery}"</p>
+            <p class="text-xs text-gray-500 mt-1">Intenta con otro término o limpia los filtros de región.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        // Calcular ancho de barra según modo de escala
+        let barPct = 0;
+        if (state.scaleMode === "sqrt") {
+          barPct = Math.max(2, (Math.sqrt(item.subs) / Math.sqrt(maxSubs)) * 100);
+        } else {
+          barPct = Math.max(1.2, (item.subs / maxSubs) * 100);
+        }
+
+        const isTop3 = item.rank <= 3;
+        const barGradient = item.rank === 1 
+          ? 'from-red-600 via-rose-500 to-amber-400' 
+          : item.rank === 2 
+            ? 'from-red-700 via-red-500 to-slate-200'
+            : item.rank === 3
+              ? 'from-red-800 via-red-600 to-amber-500'
+              : 'from-red-950 via-red-700 to-red-500';
+
+        return `
+          <div onclick="selectCountry(${item.id}); document.getElementById('mapa-section').scrollIntoView({behavior:'smooth'});" 
+               class="group p-3 rounded-xl bg-black/45 hover:bg-red-950/35 border border-red-950/80 hover:border-red-500/60 transition cursor-pointer">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+              <div class="flex items-center gap-2.5 min-w-0">
+                <span class="w-7 text-xs font-display font-extrabold ${isTop3 ? 'text-amber-400' : 'text-red-400'}">#${item.rank}</span>
+                <span class="text-lg leading-none">${item.flag}</span>
+                <span class="font-bold text-sm text-white truncate">${item.country}</span>
+                <span class="text-xs font-semibold text-red-400 truncate">${item.handle}</span>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-[11px] text-gray-400 hidden sm:inline">(${formatNumber(item.subs)})</span>
+                <span class="font-display font-extrabold text-base text-white bg-red-950/80 px-2.5 py-0.5 rounded-lg border border-red-700/40 group-hover:border-red-400 transition">
+                  ${item.subsShort}
+                </span>
+              </div>
+            </div>
+            <!-- Barra de progreso -->
+            <div class="w-full h-2.5 bg-[#090203] rounded-full overflow-hidden border border-red-950">
+              <div class="h-full bg-gradient-to-r ${barGradient} rounded-full transition-all duration-500 group-hover:brightness-125" style="width: ${barPct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Renderizar Cuadrícula de Tarjetas y Tabla
+    function renderDirectory() {
+      const sorted = [...rankedData].sort((a, b) => {
+        if (state.sortBy === "alpha") {
+          return a.country.localeCompare(b.country, 'es');
+        }
+        return b.subs - a.subs;
+      });
+
+      // 1. Cuadrícula de Tarjetas
+      const gridContainer = document.getElementById('cards-grid-container');
+      gridContainer.innerHTML = sorted.map(item => {
+        const podiumBorder = item.rank === 1 
+          ? 'border-amber-500/60 shadow-neon-red' 
+          : item.rank === 2 
+            ? 'border-slate-300/40' 
+            : item.rank === 3 
+              ? 'border-amber-700/50' 
+              : 'border-red-900/35';
+
+        return `
+          <div onclick="selectCountry(${item.id}); document.getElementById('mapa-section').scrollIntoView({behavior:'smooth'});"
+               class="red-glass rounded-2xl p-5 ${podiumBorder} flex flex-col justify-between cursor-pointer group relative overflow-hidden">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-700 to-black border border-red-500/40 flex items-center justify-center text-2xl shadow-md group-hover:scale-105 transition">
+                  ${item.flag}
+                </div>
+                <div>
+                  <h3 class="font-display font-bold text-xl text-white group-hover:text-red-400 transition leading-tight">${item.country}</h3>
+                  <span class="text-[11px] text-gray-400 font-medium">${item.region}</span>
+                </div>
+              </div>
+              ${getPodiumBadge(item.rank)}
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-red-950/80 flex items-end justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">CGTuber Líder</div>
+                <div class="text-sm font-bold text-red-400 truncate mt-0.5">${item.handle}</div>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="font-display text-2xl font-extrabold text-white leading-none">${item.subsShort}</div>
+                <div class="text-[11px] text-gray-400 mt-1">${formatNumber(item.subs)} subs</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 2. Tabla / Lista
+      const tableBody = document.getElementById('table-body');
+      tableBody.innerHTML = sorted.map(item => `
+        <tr onclick="selectCountry(${item.id}); document.getElementById('mapa-section').scrollIntoView({behavior:'smooth'});"
+            class="hover:bg-red-950/35 transition cursor-pointer">
+          <td class="py-3.5 px-4 whitespace-nowrap">${getPodiumBadge(item.rank, true)}</td>
+          <td class="py-3.5 px-4 font-bold text-white whitespace-nowrap">
+            <span class="mr-2 text-base">${item.flag}</span>${item.country}
+          </td>
+          <td class="py-3.5 px-4 text-xs text-gray-400 whitespace-nowrap">${item.region}</td>
+          <td class="py-3.5 px-4 font-semibold text-red-400">${item.handle}</td>
+          <td class="py-3.5 px-4 text-right font-display font-extrabold text-lg text-white whitespace-nowrap">${item.subsShort}</td>
+          <td class="py-3.5 px-4 text-right text-xs text-gray-400 whitespace-nowrap">${formatNumber(item.subs)}</td>
+        </tr>
+      `).join('');
+    }
+
+    // Construir Mapa SVG de América usando D3 + World Atlas TopoJSON (110m)
+    async function initAmericasMap() {
+      const container = document.getElementById('map-container');
+      const loader = document.getElementById('map-loader');
+      const tooltip = document.getElementById('map-tooltip');
+
+      // Códigos ISO-3166-1 numéricos de países de América (incluyendo los N/A de la imagen)
+      const americasISOs = new Set([
+        "124", // Canadá (N/A)
+        "840", // Estados Unidos
+        "484", // México
+        "084", // Belice (N/A)
+        "320", // Guatemala
+        "222", // El Salvador
+        "340", // Honduras
+        "558", // Nicaragua
+        "188", // Costa Rica
+        "591", // Panamá
+        "192", // Cuba (N/A)
+        "332", // Haití (N/A)
+        "214", // República Dominicana
+        "388", // Jamaica (N/A)
+        "630", // Puerto Rico (N/A)
+        "044", // Bahamas (N/A)
+        "170", // Colombia
+        "862", // Venezuela
+        "328", // Guyana (N/A)
+        "740", // Surinam (N/A)
+        "254", // Guayana Francesa (N/A)
+        "218", // Ecuador
+        "604", // Perú
+        "076", // Brasil
+        "068", // Bolivia
+        "600", // Paraguay
+        "152", // Chile
+        "032", // Argentina
+        "858"  // Uruguay (N/A)
+      ]);
+
+      // Etiquetas N/A explícitas como en la imagen de referencia
+      const naLabels = [
+        { name: "N/A", coords: [-106, 56], size: "22px" }, // Canadá
+        { name: "N/A", coords: [-79.5, 22], size: "11px" }, // Cuba / Caribe
+        { name: "N/A", coords: [-56, 4.5], size: "11px" },  // Guayanas / Surinam
+        { name: "N/A", coords: [-56, -32.8], size: "11px" } // Uruguay
+      ];
+
+      const dataByIso = {};
+      rankedData.forEach(d => { dataByIso[d.isoNumeric] = d; });
+
+      try {
+        const res = await fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json");
+        const worldData = await res.json();
+        const allCountries = topojson.feature(worldData, worldData.objects.countries).features;
+
+        // Filtrar América (excluir Alaska extremo oeste si distorsiona o ajustar proyección)
+        const americasFeatures = allCountries.filter(f => americasISOs.has(String(f.id).padStart(3, '0')));
+
+        loader.remove();
+
+        const width = container.clientWidth || 720;
+        const height = container.clientHeight || 520;
+
+        const svg = d3.select("#map-container")
+          .append("svg")
+          .attr("viewBox", `0 0 ${width} ${height}`)
+          .attr("class", "w-full h-full select-none");
+
+        // Proyección Mercator centrada en América
+        const projection = d3.geoMercator()
+          .center([-82, 12])
+          .scale(Math.min(width, height) * 0.56)
+          .translate([width * 0.48, height * 0.53]);
+
+        const pathGenerator = d3.geoPath().projection(projection);
+
+        const g = svg.append("g");
+
+        // Zoom y Pan suave
+        const zoom = d3.zoom()
+          .scaleExtent([1, 6])
+          .on("zoom", (event) => {
+            g.attr("transform", event.transform);
+          });
+        svg.call(zoom);
+
+        // Dibujar países
+        g.selectAll("path")
+          .data(americasFeatures)
+          .enter()
+          .append("path")
+          .attr("d", pathGenerator)
+          .attr("id", d => `country-iso-${String(d.id).padStart(3, '0')}`)
+          .attr("class", d => {
+            const iso = String(d.id).padStart(3, '0');
+            return dataByIso[iso] ? "country-path has-data" : "country-path no-data";
+          })
+          .attr("fill", d => {
+            const iso = String(d.id).padStart(3, '0');
+            const item = dataByIso[iso];
+            return item ? getHeatRedColor(item.subs) : "#1b191a";
+          })
+          .on("mouseenter", function(event, d) {
+            const iso = String(d.id).padStart(3, '0');
+            const item = dataByIso[iso];
+            if (!item) return;
+
+            document.getElementById('tt-flag').textContent = item.flag;
+            document.getElementById('tt-country').textContent = `${item.country} (#${item.rank})`;
+            document.getElementById('tt-creator').textContent = item.handle;
+            document.getElementById('tt-subs').textContent = `${item.subsShort} (${formatNumber(item.subs)} subs)`;
+            tooltip.classList.remove('hidden');
+          })
+          .on("mousemove", function(event) {
+            tooltip.style.left = `${event.clientX + 14}px`;
+            tooltip.style.top = `${event.clientY - 28}px`;
+          })
+          .on("mouseleave", function() {
+            tooltip.classList.add('hidden');
+          })
+          .on("click", function(event, d) {
+            const iso = String(d.id).padStart(3, '0');
+            const item = dataByIso[iso];
+            if (item) {
+              selectCountry(item.id);
+            }
+          });
+
+        // Dibujar etiquetas "N/A" en regiones sin datos (Canadá, Cuba, Guayanas, Uruguay)
+        g.selectAll("text.na-label")
+          .data(naLabels)
+          .enter()
+          .append("text")
+          .attr("class", "na-label pointer-events-none font-display font-extrabold")
+          .attr("x", d => projection(d.coords)[0])
+          .attr("y", d => projection(d.coords)[1])
+          .attr("text-anchor", "middle")
+          .attr("fill", "#ffffff")
+          .attr("stroke", "#000000")
+          .attr("stroke-width", "3px")
+          .attr("paint-order", "stroke")
+          .style("font-size", d => d.size)
+          .style("opacity", 0.9)
+          .text(d => d.name);
+
+        // Activar Estados Unidos inicialmente
+        selectCountry(1);
+
+      } catch (err) {
+        console.error("Error cargando mapa:", err);
+        loader.innerHTML = `<p class="text-xs text-red-400">No se pudo cargar el mapa vectorial. Usa los botones de Acceso Rápido abajo.</p>`;
+      }
+    }
+
+    // Configurar Eventos de Interfaz
+    function bindEvents() {
+      // Botón siguiente país en el inspector
+      document.getElementById('btn-next-country').addEventListener('click', () => {
+        const currentIdx = rankedData.findIndex(d => d.id === state.selectedCountryId);
+        const nextIdx = (currentIdx + 1) % rankedData.length;
+        selectCountry(rankedData[nextIdx].id);
+      });
+
+      // Buscador
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderHorizontalChart();
+      });
+
+      // Filtros de región
+      document.querySelectorAll('.region-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.region-btn').forEach(b => {
+            b.classList.remove('bg-red-600', 'text-white', 'shadow-neon-red', 'font-bold');
+            b.classList.add('text-gray-300', 'font-semibold');
+          });
+          btn.classList.add('bg-red-600', 'text-white', 'shadow-neon-red', 'font-bold');
+          btn.classList.remove('text-gray-300', 'font-semibold');
+
+          state.regionFilter = btn.dataset.region;
+          renderHorizontalChart();
+        });
+      });
+
+      // Alternar escala del gráfico
+      document.getElementById('toggle-scale-btn').addEventListener('click', (e) => {
+        state.scaleMode = state.scaleMode === "sqrt" ? "linear" : "sqrt";
+        e.target.textContent = state.scaleMode === "sqrt" 
+          ? "Modo: Raíz Cuadrada (Equilibrada)" 
+          : "Modo: Lineal (Proporcional)";
+        renderHorizontalChart();
+      });
+
+      // Ordenar directorio
+      document.getElementById('sort-toggle-btn').addEventListener('click', () => {
+        state.sortBy = state.sortBy === "subs" ? "alpha" : "subs";
+        document.getElementById('sort-label').textContent = state.sortBy === "subs"
+          ? "Orden: Suscriptores (Mayor a Menor)"
+          : "Orden: Alfabético (A - Z)";
+        renderDirectory();
+      });
+
+      // Alternar vista Cuadrícula / Tabla
+      const gridBtn = document.getElementById('view-grid-btn');
+      const listBtn = document.getElementById('view-list-btn');
+      const gridContainer = document.getElementById('cards-grid-container');
+      const tableContainer = document.getElementById('table-list-container');
+
+      gridBtn.addEventListener('click', () => {
+        state.viewMode = "grid";
+        gridBtn.classList.add('bg-red-600', 'text-white');
+        gridBtn.classList.remove('text-gray-400');
+        listBtn.classList.remove('bg-red-600', 'text-white');
+        listBtn.classList.add('text-gray-400');
+        gridContainer.classList.remove('hidden');
+        tableContainer.classList.add('hidden');
+      });
+
+      listBtn.addEventListener('click', () => {
+        state.viewMode = "list";
+        listBtn.classList.add('bg-red-600', 'text-white');
+        listBtn.classList.remove('text-gray-400');
+        gridBtn.classList.remove('bg-red-600', 'text-white');
+        gridBtn.classList.add('text-gray-400');
+        tableContainer.classList.remove('hidden');
+        gridContainer.classList.add('hidden');
+      });
+    }
+
+    // Gestión de Pantalla de Bienvenida (localStorage + apertura manual)
+    function initWelcomeModal() {
+      const STORAGE_KEY = 'abg_cgtubers_2026_welcome_seen';
+      const modal = document.getElementById('welcome-modal');
+      const closeBtn = document.getElementById('close-welcome-btn');
+      const openBtn = document.getElementById('open-welcome-btn');
+
+      function showModal() {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        // Forzar reflow para transición suave de opacidad
+        requestAnimationFrame(() => {
+          modal.classList.remove('opacity-0');
+          modal.classList.add('opacity-100');
+        });
+      }
+
+      function hideModal() {
+        modal.classList.remove('opacity-100');
+        modal.classList.add('opacity-0');
+        try {
+          localStorage.setItem(STORAGE_KEY, 'true');
+        } catch (e) {
+          // Ignorar errores si el almacenamiento local está restringido
+        }
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          modal.classList.remove('flex');
+        }, 300);
+      }
+
+      closeBtn.addEventListener('click', hideModal);
+      openBtn.addEventListener('click', showModal);
+
+      // Cerrar también con tecla Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+          hideModal();
+        }
+      });
+
+      // Mostrar automáticamente si es la primera visita del usuario
+      let hasSeen = false;
+      try {
+        hasSeen = localStorage.getItem(STORAGE_KEY) === 'true';
+      } catch (e) {
+        hasSeen = false;
+      }
+
+      if (!hasSeen) {
+        showModal();
+      }
+    }
+
+    // Inicialización
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('kpi-total-subs').textContent = formatNumber(totalSubs);
+      document.getElementById('kpi-avg-subs').textContent = formatNumber(Math.round(totalSubs / rankedData.length));
+
+      renderQuickPills();
+      renderHorizontalChart();
+      renderDirectory();
+      selectCountry(1);
+      bindEvents();
+      initWelcomeModal();
+      initAmericasMap();
+    });
+  </script>
+</body>
+</html>
